@@ -371,6 +371,17 @@ public abstract class SharedRMCFlammableSystem : EntitySystem
     {
     }
 
+    private bool IsInExclusionZone(EntityCoordinates target, List<Box2> exclusionZones)
+    {
+        var targetPos = target.Position;
+        foreach (var zone in exclusionZones)
+        {
+            if (zone.Contains(targetPos))
+                return true;
+        }
+        return false;
+    }
+
     private void SpawnFireChain(EntProtoId spawn, EntityUid chain, EntityCoordinates coordinates, int? intensity, int? duration)
     {
         var spawned = Spawn(spawn, coordinates);
@@ -390,7 +401,7 @@ public abstract class SharedRMCFlammableSystem : EntitySystem
         _onCollide.SetChain((spawned, onCollide), chain);
     }
 
-    private void SpawnFires(EntProtoId spawn, EntityCoordinates coordinates, int range, EntityUid chain, int? intensity, int? duration, HashSet<EntityCoordinates>? spawned = null)
+    private void SpawnFires(EntProtoId spawn, EntityCoordinates coordinates, int range, EntityUid chain, int? intensity, int? duration, HashSet<EntityCoordinates>? spawned = null, List<Box2>? exclusionZones = null)
     {
         if (_net.IsClient)
             return;
@@ -402,36 +413,41 @@ public abstract class SharedRMCFlammableSystem : EntitySystem
             if (!spawned.Add(target))
                 continue;
 
-            var nextRange = SpawnFire(target, spawn, chain, range, intensity, duration, out var cont);
+            var nextRange = SpawnFire(target, spawn, chain, range, intensity, duration, out var cont, exclusionZones);
             if (nextRange == 0 || cont)
                 continue;
 
             Timer.Spawn(TimeSpan.FromMilliseconds(50),
-                () =>
+            () =>
+            {
+                try
                 {
-                    try
-                    {
-                        SpawnFires(spawn, target, nextRange, chain, intensity, duration, spawned);
-                    }
-                    catch (Exception e)
-                    {
-                        Log.Error($"Error occurred spawning fires:\n{e}");
-                    }
-                });
+                    SpawnFires(spawn, target, nextRange, chain, intensity, duration, spawned, exclusionZones);
+                }
+                catch (Exception e)
+                {
+                    Log.Error($"Error occurred spawning fires:\n{e}");
+                }
+            });
         }
     }
 
-    public void SpawnFireDiamond(EntProtoId spawn, EntityCoordinates center, int range, int? intensity = null, int? duration = null)
+    public void SpawnFireDiamond(EntProtoId spawn, EntityCoordinates center, int range, int? intensity = null, int? duration = null, List<Box2>? exclusionZones = null)
     {
         var chain = _onCollide.SpawnChain();
-        SpawnFires(spawn, center, range, chain, intensity, duration);
+        SpawnFires(spawn, center, range, chain, intensity, duration, exclusionZones: exclusionZones);
     }
 
-    public int SpawnFire(EntityCoordinates target, EntProtoId spawn, EntityUid chain, int range, int? intensity, int? duration, out bool cont)
+    public int SpawnFire(EntityCoordinates target, EntProtoId spawn, EntityUid chain, int range, int? intensity, int? duration, out bool cont, List<Box2>? exclusionZones = null)
     {
         cont = false;
-        if (!_rmcMap.TryGetTileDef(target, out var tile) ||
-            tile.ID == ContentTileDefinition.SpaceID)
+        if (!_rmcMap.TryGetTileDef(target, out var tile) || tile.ID == ContentTileDefinition.SpaceID)
+        {
+            cont = true;
+            return range;
+        }
+
+        if (exclusionZones != null && IsInExclusionZone(target, exclusionZones))
         {
             cont = true;
             return range;
