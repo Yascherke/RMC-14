@@ -33,7 +33,7 @@ public sealed partial class ThermalCloakComponent : Component
     public bool RestrictWeapons;
 
     [DataField, AutoNetworkedField]
-    public bool HideNightVision = true;
+    public bool HideNightVision = false;
 
     [DataField, AutoNetworkedField]
     public bool BlockFriendlyFire = true;
