@@ -72,7 +72,7 @@
       - [ RMCMotionDetector ]
       - [ RMCGrenadeCustomMetalFoam ]
       - [ RMCGrenadeCustomWeedkiller ]
-      - [ RMCThermalTarpV2Folded ]
+#      - [ RMCThermalTarpV2Folded ]
 
 - type: entity
   parent: MarkerBase
