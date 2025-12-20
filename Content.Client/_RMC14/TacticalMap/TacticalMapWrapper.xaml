@@ -4,8 +4,15 @@
     xmlns:ui="clr-namespace:Content.Client._RMC14.UserInterface">
 
     <PanelContainer StyleClasses="BorderedWindowPanel">
-        <TabContainer Name="Tabs" Access="Public">
-            <BoxContainer Name="MapTab" Access="Public" Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
+        <BoxContainer Orientation="Vertical">
+            <BoxContainer Name="MapSelectionRow" Access="Public" Orientation="Horizontal" Margin="2">
+                <Label Name="MapSelectLabel" Access="Public" Text="{Loc ui-tactical-map-map-select-label}" StyleClasses="LabelSmall"
+                       Margin="0 0 4 0" VerticalAlignment="Center" />
+                <OptionButton Name="MapSelectButton" Access="Public" StyleClasses="OpenBoth" HorizontalExpand="True" />
+            </BoxContainer>
+
+            <TabContainer Name="Tabs" Access="Public">
+                <BoxContainer Name="MapTab" Access="Public" Orientation="Vertical" HorizontalExpand="True" VerticalExpand="True">
                 <!-- main controls -->
                 <BoxContainer Orientation="Horizontal" Margin="2" HorizontalExpand="True">
                     <Button Name="LabelsButton" Access="Public" Text="{Loc ui-tactical-map-labels-button}" StyleClasses="OpenBoth" Margin="0 0 2 0" MinWidth="60" />
@@ -27,8 +34,8 @@
                                            MouseFilter="Pass" HorizontalExpand="True" VerticalExpand="True" Margin="2" />
             </BoxContainer>
 
-            <BoxContainer Name="CanvasTab" Access="Public" Orientation="Vertical" Visible="False"
-                          HorizontalExpand="True" VerticalExpand="True">
+                <BoxContainer Name="CanvasTab" Access="Public" Orientation="Vertical" Visible="False"
+                              HorizontalExpand="True" VerticalExpand="True">
 
                 <!-- primary -->
                 <BoxContainer Orientation="Horizontal" Margin="2">
@@ -75,8 +82,9 @@
                 <controls:TacticalMapControl Name="Canvas" Access="Public" Stretch="Keep"
                                              Drawing="True" MouseFilter="Pass"
                                              HorizontalExpand="True" VerticalExpand="True" Margin="2" />
-            </BoxContainer>
-        </TabContainer>
+                </BoxContainer>
+            </TabContainer>
+        </BoxContainer>
     </PanelContainer>
 
 </controls:TacticalMapWrapper>

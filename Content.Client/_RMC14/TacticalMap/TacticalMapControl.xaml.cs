@@ -43,6 +43,7 @@ public sealed partial class TacticalMapControl : TextureRect
     private const float MaxZoom = 5.0f;
     private const float ZoomSpeed = 1.2f;
     private const float LabelClickTolerance = 15f;
+    private const float EdgeTrimThreshold = 0.6f;
 
     [Dependency] private readonly IResourceCache _resourceCache = default!;
     [Dependency] private readonly IEntityManager _entityManager = default!;
@@ -179,21 +180,34 @@ public sealed partial class TacticalMapControl : TextureRect
         if (grid.Comp.Colors.Count == 0)
             return;
 
-        _min = Vector2i.Zero;
-        Vector2i max = Vector2i.Zero;
-        foreach (Vector2i position in grid.Comp.Colors.Keys)
-        {
-            _min = Vector2i.ComponentMin(_min, position);
-            max = Vector2i.ComponentMax(max, position);
-        }
-
-        if (max.X - _min.X <= 0 || max.Y - _min.Y <= 0)
+        var colors = grid.Comp.Colors;
+        if (!TryGetBounds(colors, out var fullMin, out var fullMax))
             return;
 
-        _delta = max - _min;
-        Image<Rgba32> image = new(_delta.X + 1, _delta.Y + 1);
-        foreach ((Vector2i position, Color color) in grid.Comp.Colors)
+        var boundsMin = fullMin;
+        var boundsMax = fullMax;
+        if (TryGetDominantEdgeColor(colors, fullMin, fullMax, out var edgeColor) &&
+            TryGetBoundsExcludingColor(colors, edgeColor, out var trimmedMin, out var trimmedMax))
         {
+            boundsMin = trimmedMin;
+            boundsMax = trimmedMax;
+        }
+
+        _min = boundsMin;
+        _delta = boundsMax - boundsMin;
+
+        if (_delta.X <= 0 || _delta.Y <= 0)
+            return;
+
+        Image<Rgba32> image = new(_delta.X + 1, _delta.Y + 1);
+        foreach ((Vector2i position, Color color) in colors)
+        {
+            if (position.X < boundsMin.X || position.X > boundsMax.X ||
+                position.Y < boundsMin.Y || position.Y > boundsMax.Y)
+            {
+                continue;
+            }
+
             (int x, int y) = GetDrawPosition(position);
             image[x, y] = new Rgba32(color.R, color.G, color.B, color.A);
         }
@@ -202,6 +216,110 @@ public sealed partial class TacticalMapControl : TextureRect
         _areaLabels = new Dictionary<Vector2i, string>(grid.Comp.Labels);
 
         ApplyViewSettings();
+    }
+
+    private static bool TryGetBounds(IReadOnlyDictionary<Vector2i, Color> colors, out Vector2i min, out Vector2i max)
+    {
+        min = default;
+        max = default;
+        var hasValue = false;
+
+        foreach (var (pos, _) in colors)
+        {
+            if (!hasValue)
+            {
+                min = pos;
+                max = pos;
+                hasValue = true;
+            }
+            else
+            {
+                min = Vector2i.ComponentMin(min, pos);
+                max = Vector2i.ComponentMax(max, pos);
+            }
+        }
+
+        return hasValue;
+    }
+
+    private static bool TryGetBoundsExcludingColor(
+        IReadOnlyDictionary<Vector2i, Color> colors,
+        Color excluded,
+        out Vector2i min,
+        out Vector2i max)
+    {
+        min = default;
+        max = default;
+        var hasValue = false;
+
+        foreach (var (pos, color) in colors)
+        {
+            if (color == excluded)
+                continue;
+
+            if (!hasValue)
+            {
+                min = pos;
+                max = pos;
+                hasValue = true;
+            }
+            else
+            {
+                min = Vector2i.ComponentMin(min, pos);
+                max = Vector2i.ComponentMax(max, pos);
+            }
+        }
+
+        return hasValue;
+    }
+
+    private static bool TryGetDominantEdgeColor(
+        IReadOnlyDictionary<Vector2i, Color> colors,
+        Vector2i min,
+        Vector2i max,
+        out Color color)
+    {
+        var counts = new Dictionary<Color, int>();
+        var total = 0;
+
+        foreach (var (pos, value) in colors)
+        {
+            if (pos.X != min.X && pos.X != max.X &&
+                pos.Y != min.Y && pos.Y != max.Y)
+            {
+                continue;
+            }
+
+            total++;
+            counts.TryGetValue(value, out var count);
+            counts[value] = count + 1;
+        }
+
+        if (total == 0)
+        {
+            color = default;
+            return false;
+        }
+
+        var dominantCount = 0;
+        Color dominantColor = default;
+        foreach (var (candidate, count) in counts)
+        {
+            if (count > dominantCount)
+            {
+                dominantCount = count;
+                dominantColor = candidate;
+            }
+        }
+
+        if (dominantCount < total * EdgeTrimThreshold)
+        {
+            color = default;
+            return false;
+        }
+
+        color = dominantColor;
+        return true;
     }
 
     public void UpdateBlips(TacticalMapBlip[]? blips)

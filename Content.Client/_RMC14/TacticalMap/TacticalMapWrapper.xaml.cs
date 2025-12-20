@@ -18,6 +18,7 @@ using Robust.Shared.Map.Components;
 using Robust.Shared.Maths;
 using Robust.Shared.Timing;
 using Robust.Shared.Input;
+using Robust.Shared.Network;
 using Robust.Shared.IoC.Exceptions;
 
 namespace Content.Client._RMC14.TacticalMap;
@@ -39,6 +40,7 @@ public sealed partial class TacticalMapWrapper : Control
     public TimeSpan NextUpdateAt;
 
     public Action<Vector2i>? OnQueenEyeMove;
+    public event Action<NetEntity>? MapSelected;
 
     private const float FollowUpdateInterval = 0.5f;
 
@@ -69,8 +71,9 @@ public sealed partial class TacticalMapWrapper : Control
 
     private TacticalMapSettingsManager? _settingsManager;
     private bool _settingsLoaded = false;
-    private string? _currentMapName;
-    private bool _mapNameSet = false;
+    private string? _currentMapId;
+    private bool _mapIdSet = false;
+    private bool _suppressMapSelection;
 
     private float _currentBlipSizeMultiplier = 1.0f;
     private float _currentLineThickness = 2.0f;
@@ -118,28 +121,28 @@ public sealed partial class TacticalMapWrapper : Control
         };
     }
 
-    public void SetMapEntity(string? mapName)
+    public void SetMapId(string? mapId)
     {
-        if (_currentMapName == mapName && _mapNameSet)
+        if (_currentMapId == mapId && _mapIdSet)
             return;
 
-        _currentMapName = mapName;
-        _mapNameSet = true;
+        _currentMapId = mapId;
+        _mapIdSet = true;
         _settingsLoaded = false;
 
         Map.SetCurrentMap(null);
-        Map.SetCurrentMapName(mapName);
+        Map.SetCurrentMapName(mapId);
         Canvas.SetCurrentMap(null);
-        Canvas.SetCurrentMapName(mapName);
+        Canvas.SetCurrentMapName(mapId);
 
         LoadSettings();
     }
 
-    public void LoadMapSpecificSettings(TacticalMapSettings settings, string? mapName)
+    public void LoadMapSpecificSettings(TacticalMapSettings settings, string? mapId)
     {
-        SetMapEntity(mapName);
-        Map.SetCurrentMapName(mapName);
-        Canvas.SetCurrentMapName(mapName);
+        SetMapId(mapId);
+        Map.SetCurrentMapName(mapId);
+        Canvas.SetCurrentMapName(mapId);
         ApplySettings(settings);
     }
 
@@ -177,7 +180,7 @@ public sealed partial class TacticalMapWrapper : Control
 
         try
         {
-            var settings = _settingsManager.LoadSettings(_currentMapName);
+            var settings = _settingsManager.LoadSettings(_currentMapId);
             ApplySettings(settings);
             _settingsLoaded = true;
         }
@@ -240,13 +243,37 @@ public sealed partial class TacticalMapWrapper : Control
         Map.UpdateTexture(grid);
         Canvas.UpdateTexture(grid);
 
-        SetMapEntity(_currentMapName);
+        SetMapId(_currentMapId);
 
-        Map.SetCurrentMapName(_currentMapName);
-        Canvas.SetCurrentMapName(_currentMapName);
+        Map.SetCurrentMapName(_currentMapId);
+        Canvas.SetCurrentMapName(_currentMapId);
 
         Map.ApplyViewSettings();
         Canvas.ApplyViewSettings();
+    }
+
+    public void UpdateMapList(IReadOnlyList<TacticalMapMapInfo> maps, NetEntity activeMap)
+    {
+        _suppressMapSelection = true;
+        MapSelectButton.Clear();
+
+        var selectedId = -1;
+        for (var i = 0; i < maps.Count; i++)
+        {
+            var map = maps[i];
+            MapSelectButton.AddItem(map.DisplayName, i);
+            MapSelectButton.SetItemMetadata(i, map.Map);
+            if (map.Map == activeMap)
+                selectedId = i;
+        }
+
+        MapSelectionRow.Visible = maps.Count > 0;
+        MapSelectButton.Disabled = maps.Count <= 1;
+
+        if (maps.Count > 0)
+            MapSelectButton.SelectId(selectedId >= 0 ? selectedId : 0);
+
+        _suppressMapSelection = false;
     }
 
     public void UpdateBlips(TacticalMapBlip[]? blips)
@@ -291,6 +318,7 @@ public sealed partial class TacticalMapWrapper : Control
         UndoButton.OnPressed += _ => OnUndoPressed();
         Canvas.Color = Color.Black;
 
+        SetupMapSelector();
         SetupColorButton();
         SetupAreaLabels();
         SetupBlipSize();
@@ -372,6 +400,18 @@ public sealed partial class TacticalMapWrapper : Control
 
         LabelEditButton.OnPressed += _ => ToggleDrawingMode(DrawingMode.LabelEdit);
         UpdateDrawingModeAppearance();
+    }
+
+    private void SetupMapSelector()
+    {
+        MapSelectButton.OnItemSelected += args =>
+        {
+            if (_suppressMapSelection)
+                return;
+
+            if (MapSelectButton.GetItemMetadata(args.Id) is NetEntity map)
+                MapSelected?.Invoke(map);
+        };
     }
 
     private void SetupColorButton()
@@ -795,16 +835,7 @@ public sealed partial class TacticalMapWrapper : Control
         if (!TryGetCachedPlayerData(out int playerNetId, out TacticalMapUserComponent userComp))
             return false;
 
-        foreach ((int id, TacticalMapBlip blip) in userComp.XenoBlips)
-        {
-            if (id == playerNetId)
-            {
-                playerIndices = blip.Indices;
-                return true;
-            }
-        }
-
-        foreach ((int id, TacticalMapBlip blip) in userComp.MarineBlips)
+        foreach ((int id, TacticalMapBlip blip) in userComp.Blips)
         {
             if (id == playerNetId)
             {

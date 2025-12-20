@@ -220,7 +220,7 @@
     - Stun
     - KnockedDown
   - type: TacticalMapUser
-    xenos: true
+    visibleLayers: [Xenos]
     canDraw: true
     liveUpdate: true
   - type: TacticalMapIcon

@@ -15,7 +15,7 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
     
     private TacticalMapSettingsManager? _settingsManager;
     private bool _settingsLoaded = false;
-    private string? _currentMapName;
+    private string? _currentMapId;
 
     public TacticalMapWindow()
     {
@@ -28,7 +28,7 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
         {
             try
             {
-                var settings = _settingsManager.LoadSettings(_currentMapName);
+                var settings = _settingsManager.LoadSettings(_currentMapId);
 
                 if (settings.WindowSize.X > 0 && settings.WindowSize.Y > 0)
                 {
@@ -45,7 +45,7 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
             }
             catch (Exception ex)
             {
-                _logger.Warning($"Failed to load window settings for map '{_currentMapName}', using defaults: {ex}");
+                _logger.Warning($"Failed to load window settings for map '{_currentMapId}', using defaults: {ex}");
             }
         }
 
@@ -61,17 +61,17 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
         OnClose += OnWindowClose;
     }
 
-    public void SetMapEntity(string? mapName)
+    public void SetMapId(string? mapId)
     {
-        if (_currentMapName == mapName)
+        if (_currentMapId == mapId)
             return;
 
-        _currentMapName = mapName;
+        _currentMapId = mapId;
 
         if (_settingsLoaded && _settingsManager != null)
         {
             LoadWindowSettings();
-        }
+    }
     }
 
     private void InitializeSettings()
@@ -95,7 +95,7 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
 
         try
         {
-            var settings = _settingsManager.LoadSettings(_currentMapName);
+            var settings = _settingsManager.LoadSettings(_currentMapId);
 
             if (settings.WindowSize.X > 0 && settings.WindowSize.Y > 0)
             {
@@ -114,7 +114,7 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
         }
         catch (Exception ex)
         {
-            _logger.Warning($"Failed to load window settings for map '{_currentMapName}': {ex}");
+            _logger.Warning($"Failed to load window settings for map '{_currentMapId}': {ex}");
         }
     }
 
@@ -130,11 +130,11 @@ public sealed partial class TacticalMapWindow : RMCPopOutWindow
             currentSettings.WindowSize = new Vector2(SetSize.X, SetSize.Y);
             currentSettings.WindowPosition = new Vector2(Position.X, Position.Y);
 
-            _settingsManager.SaveSettings(currentSettings, _currentMapName);
+            _settingsManager.SaveSettings(currentSettings, _currentMapId);
         }
         catch (Exception ex)
         {
-            _logger.Error($"Failed to save window settings on close for map '{_currentMapName}': {ex}");
+            _logger.Error($"Failed to save window settings on close for map '{_currentMapId}': {ex}");
         }
     }
 }
