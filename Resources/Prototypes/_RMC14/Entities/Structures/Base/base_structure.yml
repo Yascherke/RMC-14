@@ -137,10 +137,19 @@
   - type: Damageable
     damageContainer: StructuralMarine
     damageModifierSet: StructuralMarine
+  - type: RMCRepairable
+    delay: 2
+  - type: DamageVisuals
+    thresholds: [4, 8, 12]
+    damageDivisor: 250
+    trackAllDamage: true
+    damageOverlay:
+      sprite: _RMC14/Structures/Walls/walls.rsi
   - type: Corrodible
     isCorrodible: true
     structure: true
     meltTimeMult: 3
+  - type: XenoAcidHoleWall
   - type: Clickable
   - type: RMCWallExplosionDeletable
   - type: DestroyedByExplosionType

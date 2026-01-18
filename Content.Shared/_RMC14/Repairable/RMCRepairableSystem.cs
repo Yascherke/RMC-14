@@ -309,39 +309,54 @@ public sealed class RMCRepairableSystem : EntitySystem
         NailgunComponent nailgunComponent,
         out EntityUid? heldStack)
     {
-        float repairValue = 0;
         heldStack = null;
+        if (!TryGetNailgunRepairStack(hands, nailgunComponent.MaterialPerRepair, out var stackUid, out var stackComponent))
+            return 0;
+
+        heldStack = stackUid;
+
+        var stackType = stackComponent.StackTypeId;
+        if (stackType == "CMSteel")
+            return repairable.Comp.RepairMetal;
+
+        if (stackType == "CMPlasteel")
+            return repairable.Comp.RepairPlasteel;
+
+        if (stackType == "RMCPlankWood")
+            return repairable.Comp.RepairWood;
+
+        return 0;
+    }
+
+    public bool TryGetNailgunRepairStack(Entity<HandsComponent?> hands, int required, out EntityUid stackUid, out StackComponent stack)
+    {
+        stackUid = default;
+        stack = default!;
+
         foreach (var held in _hands.EnumerateHeld(hands))
         {
             if (!TryComp(held, out StackComponent? stackComponent))
                 continue;
 
-            var stackType = stackComponent.StackTypeId;
-            heldStack = held;
-
-            if (stackComponent.Count < nailgunComponent.MaterialPerRepair)
+            if (!IsValidNailgunStack(stackComponent))
                 continue;
 
-            if (stackType == "CMSteel")
-            {
-                repairValue = repairable.Comp.RepairMetal;
-                break;
-            }
+            if (stackComponent.Count < required)
+                continue;
 
-            if (stackType == "CMPlasteel")
-            {
-                repairValue = repairable.Comp.RepairPlasteel;
-                break;
-            }
-
-            if (stackType == "RMCPlankWood")
-            {
-                repairValue = repairable.Comp.RepairWood;
-                break;
-            }
+            stackUid = held;
+            stack = stackComponent;
+            return true;
         }
 
-        return repairValue;
+        return false;
+    }
+
+    private static bool IsValidNailgunStack(StackComponent stackComponent)
+    {
+        return stackComponent.StackTypeId == "CMSteel" ||
+               stackComponent.StackTypeId == "CMPlasteel" ||
+               stackComponent.StackTypeId == "RMCPlankWood";
     }
 
     private void OnWelderInteractUsing(Entity<ReagentTankComponent> ent, ref InteractUsingEvent args)
