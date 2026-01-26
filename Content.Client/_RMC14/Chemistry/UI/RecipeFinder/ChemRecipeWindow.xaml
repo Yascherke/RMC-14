@@ -1,0 +1,44 @@
+<ui:ChemRecipeWindow xmlns="https://spacestation14.io"
+                      xmlns:controls="clr-namespace:Content.Client.UserInterface.Controls"
+                      xmlns:ui="clr-namespace:Content.Client._RMC14.Chemistry.UI.RecipeFinder"
+                      Title="{Loc 'chem-recipe-eui-title'}"
+                      MinSize="500 380"
+                      SetSize="640 460">
+    <BoxContainer Orientation="Vertical" Margin="6" HorizontalExpand="True" VerticalExpand="True">
+        <Label Text="{Loc 'chem-recipe-eui-subtitle'}" StyleClasses="LabelSubText" />
+
+        <PanelContainer StyleClasses="Inset" Margin="0 4 0 4">
+            <BoxContainer Orientation="Vertical" Margin="4" HorizontalExpand="True">
+                <BoxContainer Orientation="Horizontal" Margin="0 0 0 3">
+                    <Label Text="{Loc 'chem-recipe-eui-search'}" MinSize="70 0" />
+                    <LineEdit Name="SearchReagent" Access="Public" HorizontalExpand="True" PlaceHolder="{Loc 'chem-recipe-eui-search-placeholder'}" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 0 0 3">
+                    <Label Text="{Loc 'chem-recipe-eui-favorites'}" MinSize="70 0" />
+                    <ui:CompactOptionButton Name="FavoriteReagent" Access="Public" HorizontalExpand="True" />
+                    <Button Name="FavoriteToggle" Access="Public" Text="{Loc 'chem-recipe-eui-favorite-add'}" Margin="4 0 0 0" MinSize="70 0" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal" Margin="0 0 0 3">
+                    <Label Text="{Loc 'chem-recipe-eui-target'}" MinSize="70 0" />
+                    <PanelContainer Name="TargetColor" Access="Public" MinSize="12 12" MaxSize="12 12" Margin="0 1 4 0" />
+                    <ui:CompactOptionButton Name="TargetReagent" Access="Public" HorizontalExpand="True" />
+                </BoxContainer>
+                <BoxContainer Orientation="Horizontal">
+                    <Label Text="{Loc 'chem-recipe-eui-amount'}" MinSize="70 0" />
+                    <FloatSpinBox Name="TargetAmount" Access="Public" HorizontalExpand="True" />
+                    <Button Name="RefreshButton" Access="Public" Text="{Loc 'chem-recipe-eui-refresh'}" Margin="4 0 0 0" MinSize="70 0" StyleClasses="OpenRight" />
+                </BoxContainer>
+            </BoxContainer>
+        </PanelContainer>
+
+        <PanelContainer StyleClasses="Inset" VerticalExpand="True">
+            <BoxContainer Orientation="Vertical" Margin="4" VerticalExpand="True">
+                <Label Text="{Loc 'chem-recipe-eui-chain-title'}" />
+                <ScrollContainer HScrollEnabled="False" VerticalExpand="True">
+                    <BoxContainer Name="RecipeRows" Access="Public" Orientation="Vertical" />
+                </ScrollContainer>
+                <Label Name="EmptyLabel" Access="Public" Text="{Loc 'chem-recipe-eui-empty'}" StyleClasses="LabelSubText" Visible="False" Margin="0 3 0 0" />
+            </BoxContainer>
+        </PanelContainer>
+    </BoxContainer>
+</ui:ChemRecipeWindow>
