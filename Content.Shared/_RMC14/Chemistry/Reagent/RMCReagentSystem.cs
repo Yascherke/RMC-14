@@ -1,4 +1,4 @@
-﻿using System.Collections.Frozen;
+using System.Collections.Frozen;
 using System.Diagnostics.CodeAnalysis;
 using Content.Shared.Chemistry.Reagent;
 using Robust.Shared.Prototypes;
@@ -55,4 +55,11 @@ public sealed class RMCReagentSystem : EntitySystem
     {
         return _reagents.TryGetValue(id.Prototype, out reagent);
     }
+
+    public IEnumerable<Reagent> Enumerate()
+    {
+        return _reagents.Values;
+    }
 }
+
+
