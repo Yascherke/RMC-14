@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RMC Map Viewer</title>
+  <link rel="stylesheet" href="app.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="eyebrow">RMC-14</div>
+        <h1>Map Viewer</h1>
+      </div>
+
+      <section class="panel">
+        <h2>Export Folder</h2>
+        <label class="field">
+          <span>Choose exported map folder</span>
+          <input id="folderInput" type="file" webkitdirectory multiple>
+        </label>
+        <div id="loadStatus" class="info empty">Choose an exported map folder to begin.</div>
+      </section>
+
+      <label class="field">
+        <span>Map</span>
+        <select id="mapSelect" disabled></select>
+      </label>
+
+      <label class="field">
+        <span>Grid</span>
+        <select id="gridSelect" disabled></select>
+      </label>
+
+      <div class="toggles">
+        <label><input id="showLabels" type="checkbox" checked> Labels</label>
+        <label><input id="showGrid" type="checkbox"> Grid</label>
+      </div>
+
+      <section class="panel">
+        <h2>Coordinates</h2>
+        <div class="fieldGrid">
+          <label class="field compact">
+            <span>X</span>
+            <input id="coordRefX" type="number" inputmode="numeric">
+          </label>
+          <label class="field compact">
+            <span>Y</span>
+            <input id="coordRefY" type="number" inputmode="numeric">
+          </label>
+        </div>
+        <div class="buttonRow">
+          <button id="applyCoords" type="button">Apply To Selected</button>
+          <button id="clearCoords" type="button">Clear</button>
+        </div>
+        <div id="coordStatus" class="info empty">Select or pin a tile, enter its coordinates, then apply the reference.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Cell</h2>
+        <div id="cellInfo" class="info empty">Move the cursor over the map.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Area</h2>
+        <div id="areaInfo" class="info empty">No area selected.</div>
+      </section>
+
+      <section class="panel">
+        <h2>Entities</h2>
+        <div id="entityInfo" class="info empty">No entities on this tile.</div>
+      </section>
+
+      <div class="meta" id="meta"></div>
+    </aside>
+
+    <main class="viewer">
+      <div class="viewerToolbar">
+        <button id="zoomOut" type="button">-</button>
+        <button id="resetView" type="button">Reset</button>
+        <button id="zoomIn" type="button">+</button>
+      </div>
+      <div id="canvasWrap" class="canvasWrap">
+        <canvas id="mapCanvas"></canvas>
+      </div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

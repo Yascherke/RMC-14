@@ -27,7 +27,29 @@ namespace Content.MapRenderer
 
             var testContext = new ExternalTestContext("Content.MapRenderer", Console.Out);
 
+            if (arguments.ShowMapViewerPath)
+            {
+                Console.WriteLine($"Standalone map viewer: {RenderedMapExporter.GetStandaloneViewerPath()}");
+                Console.WriteLine($"Load exported map folders from: {RenderedMapExporter.GetOutputRoot(arguments)}");
+                return;
+            }
+
             PoolManager.Startup();
+
+            if (arguments.ExportTacMap)
+            {
+                try
+                {
+                    await RenderedMapExporter.Run(arguments, testContext);
+                }
+                finally
+                {
+                    PoolManager.Shutdown();
+                }
+
+                return;
+            }
+
             if (arguments.Maps.Count == 0)
             {
                 Console.WriteLine("Didn't specify any maps to paint! Loading the map list...");

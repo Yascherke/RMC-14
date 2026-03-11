@@ -14,6 +14,8 @@ public sealed class CommandLineArguments
     public bool ArgumentsAreFileNames { get; set; } = false;
     public bool ShowMarkers { get; set; } = false;
     public bool OutputParallax { get; set; } = false;
+    public bool ExportTacMap { get; set; } = false;
+    public bool ShowMapViewerPath { get; set; } = false;
 
     public static bool TryParse(IReadOnlyList<string> args, [NotNullWhen(true)] out CommandLineArguments? parsed)
     {
@@ -75,6 +77,17 @@ public sealed class CommandLineArguments
                     parsed.OutputParallax = true;
                     break;
 
+                case "--tacmap":
+                case "--map-export":
+                    parsed.ExportTacMap = true;
+                    break;
+
+                case "--tacmap-viewer":
+                case "--tacmap-shell":
+                case "--map-viewer":
+                    parsed.ShowMapViewerPath = true;
+                    break;
+
                 default:
                     if (argument.StartsWith('-'))
                     {
@@ -116,6 +129,13 @@ Options:
         Show hidden markers on map render. Defaults to false.
     --parallax
         Output images and data used for map viewer parallax.
+    --tacmap
+    --map-export
+        Exports rendered map data and grid images.
+        With no map names, this auto-discovers all /Maps/_RMC14 maps used by RMC prototypes.
+    --tacmap-viewer / --tacmap-shell
+    --map-viewer
+        Prints the path to the standalone map viewer app.
     -h / --help
         Displays this help text");
     }
