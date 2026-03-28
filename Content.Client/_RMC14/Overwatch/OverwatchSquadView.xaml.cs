@@ -25,7 +25,7 @@ public sealed partial class OverwatchSquadView : Control
     public TimeSpan NextLaunchAt;
     public TimeSpan NextOrbitalAt;
 
-    private bool _squadInfoHidden;
+    private bool _squadInfoHidden = true;
 
     public OverwatchSquadView()
     {
@@ -96,6 +96,7 @@ public sealed partial class OverwatchSquadView : Control
         LaunchButton.Label.ModulateSelfOverride = Color.Black;
         SaveButton.Label.ModulateSelfOverride = Color.Black;
         OrbitalSaveButton.Label.ModulateSelfOverride = Color.Black;
+        UpdateHideSquadInfoButtonText();
     }
 
     private void OnStopOverwatchPressed(ButtonEventArgs obj)
@@ -107,7 +108,14 @@ public sealed partial class OverwatchSquadView : Control
     {
         _squadInfoHidden = !_squadInfoHidden;
         ApplySquadInfoVisibilityState();
-        HideSquadInfoButton.Text = _squadInfoHidden ? Loc.GetString("rmc-overwatch-console-show-squad-info") : Loc.GetString("rmc-overwatch-console-hide-squad-info");
+        UpdateHideSquadInfoButtonText();
+    }
+
+    private void UpdateHideSquadInfoButtonText()
+    {
+        HideSquadInfoButton.Text = _squadInfoHidden
+            ? Loc.GetString("rmc-overwatch-console-show-squad-info")
+            : Loc.GetString("rmc-overwatch-console-hide-squad-info");
     }
 
     private void MakeAllVisible(Control control)

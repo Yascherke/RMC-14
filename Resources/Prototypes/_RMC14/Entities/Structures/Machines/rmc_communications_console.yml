@@ -44,6 +44,7 @@
         type: MarineCommunicationsComputerBui
       enum.OverwatchConsoleUI.Key:
         type: OverwatchConsoleBui
+        interactionRange: 0
       enum.TacticalMapComputerUi.Key:
         type: TacticalMapComputerBui
       enum.DialogUiKey.Key:
@@ -106,6 +107,7 @@
     interfaces:
       enum.OverwatchConsoleUI.Key:
         type: OverwatchConsoleBui
+        interactionRange: 0
       enum.TacticalMapComputerUi.Key:
         type: TacticalMapComputerBui
       enum.DialogUiKey.Key:

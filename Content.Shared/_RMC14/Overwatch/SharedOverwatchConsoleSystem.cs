@@ -92,6 +92,7 @@ public abstract class SharedOverwatchConsoleSystem : EntitySystem
         SubscribeLocalEvent<OrbitalCannonChangedEvent>(OnOrbitalCannonChanged);
         SubscribeLocalEvent<OrbitalCannonLaunchEvent>(OnOrbitalCannonLaunch);
 
+        SubscribeLocalEvent<OverwatchConsoleComponent, BoundUserInterfaceMessageAttempt>(OnBuiMessageAttempt);
         SubscribeLocalEvent<OverwatchConsoleComponent, BoundUIOpenedEvent>(OnBUIOpened);
         SubscribeLocalEvent<OverwatchConsoleComponent, OverwatchTransferMarineSelectedEvent>(OnTransferMarineSelected);
         SubscribeLocalEvent<OverwatchConsoleComponent, OverwatchTransferMarineSquadEvent>(OnTransferMarineSquad);
@@ -150,6 +151,15 @@ public abstract class SharedOverwatchConsoleSystem : EntitySystem
             console.NextOrbitalLaunch = _timing.CurTime + ev.Cooldown;
             Dirty(uid, console);
         }
+    }
+
+    private void OnBuiMessageAttempt(Entity<OverwatchConsoleComponent> ent, ref BoundUserInterfaceMessageAttempt args)
+    {
+        if (args.UiKey is not OverwatchConsoleUI.Key)
+            return;
+
+        if (!IsInConsoleUiRange(args.Actor, ent.Owner))
+            args.Cancel();
     }
 
     private void OnBUIOpened(Entity<OverwatchConsoleComponent> ent, ref BoundUIOpenedEvent args)
@@ -711,6 +721,17 @@ public abstract class SharedOverwatchConsoleSystem : EntitySystem
     public bool IsHidden(Entity<OverwatchConsoleComponent> console, NetEntity marine)
     {
         return console.Comp.Hidden.Contains(marine);
+    }
+
+    public bool IsInConsoleUiRange(EntityUid actor, EntityUid console)
+    {
+        if (!TryComp(actor, out TransformComponent? actorXform) ||
+            !TryComp(console, out TransformComponent? consoleXform))
+        {
+            return false;
+        }
+
+        return _transform.InRange((actor, actorXform), (console, consoleXform), OverwatchConsoleComponent.UiRange);
     }
 
     private void TryLocalUnwatch(Entity<OverwatchWatchingComponent> ent)

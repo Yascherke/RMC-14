@@ -8,6 +8,8 @@ namespace Content.Shared._RMC14.Overwatch;
 [Access(typeof(SharedOverwatchConsoleSystem))]
 public sealed partial class OverwatchConsoleComponent : Component
 {
+    public const float UiRange = 2f;
+
     [DataField, AutoNetworkedField]
     public NetEntity? Squad;
 

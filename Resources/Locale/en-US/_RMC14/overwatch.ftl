@@ -31,6 +31,7 @@ rmc-overwatch-console-max-coordinates = Max 3 stored coordinates. Will overwrite
 rmc-overwatch-console-fire = Fire
 rmc-overwatch-console-confirm-fire = Confirm Fire Mission?
 rmc-overwatch-console-disabled-select-squad = OVERWATCH DISABLED - SELECT SQUAD
+rmc-overwatch-console-out-of-range = [color=#C7C7C7][font size=16][bold]OUT OF RANGE[/bold][/font]\nReturn to the console to resume overwatch.
 rmc-overwatch-console-dashboard = { $squadName } Overwatch | Dashboard
 rmc-overwatch-console-role-none = None
 rmc-overwatch-console-hide-marine = Hide marine

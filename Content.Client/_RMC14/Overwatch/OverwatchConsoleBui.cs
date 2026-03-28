@@ -36,7 +36,9 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
     private readonly Dictionary<NetEntity, OverwatchSquadView> _squadViews = new();
     private readonly Dictionary<NetEntity, PanelContainer> _squads = new();
     private readonly Dictionary<NetEntity, Dictionary<NetEntity, OverwatchRow>> _rows = new();
+    private bool _uiAvailable = true;
     private SquadObjectivesWindow? _objectivesWindow;
+    private OverwatchTextInputWindow? _messageWindow;
 
     public OverwatchConsoleBui(EntityUid owner, Enum uiKey) : base(owner, uiKey)
     {
@@ -52,8 +54,9 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
 
         Window = this.CreatePopOutableWindow<OverwatchConsoleWindow>();
         Window.OverwatchHeader.SetMarkupPermissive($"[color=#88C7FA]{Loc.GetString("rmc-overwatch-console-disabled-select-squad")}[/color]");
+        RefreshAvailability(refreshState: false);
 
-        if (State is OverwatchConsoleBuiState s)
+        if (_uiAvailable && State is OverwatchConsoleBuiState s)
             RefreshState(s);
 
         UpdateView();
@@ -61,7 +64,9 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
 
     protected override void UpdateState(BoundUserInterfaceState state)
     {
-        if (state is OverwatchConsoleBuiState s)
+        RefreshAvailability(refreshState: false);
+
+        if (_uiAvailable && state is OverwatchConsoleBuiState s)
             RefreshState(s);
     }
 
@@ -76,10 +81,13 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
         var squads = s.Squads.ToList();
         squads.Sort((a, b) => string.CompareOrdinal(a.Name, b.Name));
 
-        foreach (var (id, panel) in _squads)
+        foreach (var id in _squads.Keys.ToArray())
         {
             if (squads.All(oldSquad => oldSquad.Id != id))
-                panel.Orphan();
+            {
+                _squads[id].Orphan();
+                _squads.Remove(id);
+            }
         }
 
         foreach (var squad in squads)
@@ -220,6 +228,12 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
                 monitor.MessageSquadButton.OnPressed += _ =>
                 {
                     var window = new OverwatchTextInputWindow();
+                    _messageWindow = window;
+                    window.OnClose += () =>
+                    {
+                        if (_messageWindow == window)
+                            _messageWindow = null;
+                    };
 
                     void SendSquadMessage()
                     {
@@ -309,6 +323,7 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
                 Window.SquadViewContainer.AddChild(monitor);
             }
 
+            RefreshDashboardSquads(monitor, squads, activeSquad);
             monitor.OverwatchLabel.Text = Loc.GetString("rmc-overwatch-console-dashboard", ("squadName", squad.Name));
 
             monitor.OnStop += () => SendPredictedMessage(new OverwatchConsoleStopOverwatchBuiMsg());
@@ -971,6 +986,56 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
         return panel;
     }
 
+    private void RefreshDashboardSquads(OverwatchSquadView monitor, List<OverwatchSquad> squads, NetEntity? activeSquad)
+    {
+        monitor.DashboardSquadsContainer.DisposeAllChildren();
+
+        foreach (var squad in squads)
+        {
+            var selected = squad.Id == activeSquad;
+            var button = new Button
+            {
+                Text = GetDashboardSquadButtonText(squad.Name),
+                ModulateSelfOverride = squad.Color,
+                StyleClasses = { "OpenBoth" },
+                ToolTip = squad.Name,
+                MinWidth = 24,
+                MinHeight = 24,
+                SetWidth = 24,
+                SetHeight = 24,
+            };
+
+            button.Label.ModulateSelfOverride = GetDashboardSquadButtonTextColor(squad.Color);
+            button.OnPressed += _ => SendPredictedMessage(new OverwatchConsoleSelectSquadBuiMsg(squad.Id));
+
+            var panel = new PanelContainer
+            {
+                PanelOverride = new StyleBoxFlat
+                {
+                    BorderColor = selected ? Color.White : Color.FromHex("#3A3A3A"),
+                    BorderThickness = new Thickness(selected ? 2 : 1),
+                    BackgroundColor = Color.FromHex("#101010"),
+                },
+            };
+
+            panel.AddChild(button);
+            monitor.DashboardSquadsContainer.AddChild(panel);
+        }
+    }
+
+    private static string GetDashboardSquadButtonText(string squadName)
+    {
+        return string.IsNullOrWhiteSpace(squadName)
+            ? "?"
+            : squadName.Trim()[0].ToString().ToUpperInvariant();
+    }
+
+    private static Color GetDashboardSquadButtonTextColor(Color background)
+    {
+        var brightness = background.RByte * 0.299f + background.GByte * 0.587f + background.BByte * 0.114f;
+        return brightness >= 160 ? Color.Black : Color.White;
+    }
+
     private NetEntity? GetActiveSquad()
     {
         return EntMan.TryGetComponent(Owner, out OverwatchConsoleComponent? overwatch)
@@ -995,8 +1060,44 @@ public sealed class OverwatchConsoleBui : RMCPopOutBui<OverwatchConsoleWindow>
 
     public void Refresh()
     {
-        if (State is OverwatchConsoleBuiState s)
+        RefreshAvailability(refreshState: false);
+
+        if (_uiAvailable && State is OverwatchConsoleBuiState s)
             RefreshState(s);
+    }
+
+    public void RefreshAvailability(bool refreshState = true)
+    {
+        var available = PlayerManager.LocalEntity is { } player &&
+            _overwatchConsole.IsInConsoleUiRange(player, Owner);
+
+        if (available == _uiAvailable && Window != null)
+            return;
+
+        _uiAvailable = available;
+
+        if (Window == null)
+            return;
+
+        Window.SetUnavailable(!_uiAvailable);
+
+        if (!_uiAvailable)
+        {
+            CloseAuxiliaryWindows();
+            return;
+        }
+
+        if (refreshState && State is OverwatchConsoleBuiState state)
+            RefreshState(state);
+    }
+
+    private void CloseAuxiliaryWindows()
+    {
+        _messageWindow?.Close();
+        _messageWindow = null;
+
+        _objectivesWindow?.Close();
+        _objectivesWindow = null;
     }
 
     private readonly record struct OverwatchRow(

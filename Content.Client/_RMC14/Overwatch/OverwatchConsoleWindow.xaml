@@ -34,4 +34,13 @@
         <BoxContainer Name="SquadViewContainer" Access="Public" Orientation="Vertical"
                       Visible="False" />
     </Control>
+    <PanelContainer Name="UnavailableOverlay" Access="Public" HorizontalExpand="True"
+                    VerticalExpand="True" Visible="False">
+        <PanelContainer.PanelOverride>
+            <graphics:StyleBoxFlat BackgroundColor="#0E0E0EA8" />
+        </PanelContainer.PanelOverride>
+        <RichTextLabel Name="UnavailableLabel" Access="Public" HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Text="{Loc rmc-overwatch-console-out-of-range}" />
+    </PanelContainer>
 </controls:OverwatchConsoleWindow>

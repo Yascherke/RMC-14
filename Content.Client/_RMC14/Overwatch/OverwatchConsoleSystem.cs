@@ -62,6 +62,7 @@ public sealed class OverwatchConsoleSystem : SharedOverwatchConsoleSystem
     public override void Update(float frameTime)
     {
         base.Update(frameTime);
+        RefreshOpenOverwatchInterfaces();
 
         if (_player.LocalEntity is not { } player ||
             !HasComp<OverwatchWatchingComponent>(player) ||
@@ -121,6 +122,19 @@ public sealed class OverwatchConsoleSystem : SharedOverwatchConsoleSystem
 
             _audio.SetPlaybackPosition(relayedAudioEnt, audio.Comp1.PlaybackPosition);
             audio.Comp2.Relay = relayedAudioEnt;
+        }
+    }
+
+    private void RefreshOpenOverwatchInterfaces()
+    {
+        var query = EntityQueryEnumerator<OverwatchConsoleComponent, UserInterfaceComponent>();
+        while (query.MoveNext(out _, out _, out var ui))
+        {
+            foreach (var bui in ui.ClientOpenInterfaces.Values)
+            {
+                if (bui is OverwatchConsoleBui overwatchUi)
+                    overwatchUi.RefreshAvailability();
+            }
         }
     }
 }
