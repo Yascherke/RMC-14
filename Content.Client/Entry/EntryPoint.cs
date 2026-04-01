@@ -40,6 +40,7 @@ using Robust.Shared.ContentPack;
 using Robust.Shared.Prototypes;
 using Robust.Shared.Replays;
 using Robust.Shared.Timing;
+using System;
 
 namespace Content.Client.Entry
 {
@@ -197,6 +198,12 @@ namespace Content.Client.Entry
 
         private void SwitchToDefaultState(bool disconnected = false)
         {
+            if (Environment.GetEnvironmentVariable("RMC14_REPLAY_CHAT_EXPORT") == "1")
+            {
+                _stateManager.RequestStateChange<DefaultState>();
+                return;
+            }
+
             // Fire off into state dependent on launcher or not.
 
             // Check if we're loading a replay via content bundle!
